@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delight Team - Office Performance Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+
+    <div id="app" class="min-h-screen p-4 md:p-8">
+        <!-- Header -->
+        <header class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                    <div class="bg-blue-600 p-2 rounded-lg text-white">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                    <span id="header-title">Delight Team Organization</span>
+                </h1>
+                <p id="header-subtitle" class="text-slate-500 mt-1 flex items-center gap-2">
+                    <i data-lucide="globe" class="w-4 h-4"></i> Centralized Performance Management
+                </p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="exportCSV()" class="flex items-center gap-2 bg-white text-slate-700 px-5 py-2.5 rounded-xl hover:bg-slate-50 transition border border-slate-200 shadow-sm font-semibold text-sm">
+                    <i data-lucide="download" class="w-4 h-4"></i> Export CSV
+                </button>
+                <button onclick="toggleModal(true)" class="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200 font-semibold text-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Add Office
+                </button>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <!-- Sidebar -->
+            <aside class="lg:col-span-1 space-y-4">
+                <!-- Navigation -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="font-semibold mb-4 text-slate-400 text-xs uppercase tracking-wider">Navigation</h2>
+                    <div class="space-y-1">
+                        <button id="nav-global" onclick="switchView('global')" class="w-full text-left p-3 rounded-xl transition flex items-center gap-3 bg-blue-600 text-white shadow-md font-semibold">
+                            <i data-lucide="globe" class="w-4 h-4"></i>
+                            Delight Team (Total)
+                        </button>
+                        
+                        <div class="my-4 border-t border-slate-100 pt-4">
+                            <h2 class="font-semibold mb-2 text-slate-400 text-xs uppercase tracking-wider">Offices</h2>
+                            <div id="office-list" class="space-y-1">
+                                <!-- Offices injected here -->
+                                <p class="text-xs text-slate-400 italic p-3">No offices added yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="font-semibold mb-4 text-slate-400 text-xs uppercase tracking-wider">Filter Reports</h2>
+                    <input type="month" id="filter-month" onchange="updateView()" class="w-full p-2.5 border rounded-xl mb-4 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none border-slate-200">
+                    <div class="flex bg-slate-100 p-1 rounded-xl">
+                        <button onclick="switchViewType('monthly')" id="btn-monthly" class="flex-1 py-2 text-xs font-bold rounded-lg transition bg-white text-blue-600 shadow-sm">MONTHLY</button>
+                        <button onclick="switchViewType('yearly')" id="btn-yearly" class="flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-500 hover:bg-slate-200">YEARLY</button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Dashboard Content -->
+            <section class="lg:col-span-3 space-y-6">
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">Earnings</span>
+                            <div class="p-2 bg-green-50 rounded-xl text-green-600"><i data-lucide="dollar-sign"></i></div>
+                        </div>
+                        <div id="stat-earnings" class="text-2xl font-black text-slate-800">$0</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">Recruiting</span>
+                            <div class="p-2 bg-blue-50 rounded-xl text-blue-600"><i data-lucide="users"></i></div>
+                        </div>
+                        <div id="stat-recruiting" class="text-2xl font-black text-slate-800">0 Ppl</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">Registrations</span>
+                            <div class="p-2 bg-purple-50 rounded-xl text-purple-600"><i data-lucide="award"></i></div>
+                        </div>
+                        <div id="stat-registrations" class="text-2xl font-black text-slate-800">0 Dist.</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">New Offices</span>
+                            <div class="p-2 bg-orange-50 rounded-xl text-orange-600"><i data-lucide="building-2"></i></div>
+                        </div>
+                        <div id="stat-offices" class="text-2xl font-black text-slate-800">0</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="text-blue-500 w-5 h-5"></i> Performance Share
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <i data-lucide="award" class="text-orange-500 w-5 h-5"></i> Leadership Step-Ups
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entry Form (Office View Only) -->
+                <div id="entry-form-container" class="hidden bg-white p-8 rounded-2xl border border-slate-200 shadow-md ring-4 ring-blue-50/50">
+                    <h3 class="text-lg font-bold text-slate-800 mb-8">
+                        Input Records for <span id="form-month-label" class="text-blue-600 font-black underline"></span>
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Earnings ($)</label>
+                            <input type="number" id="input-earnings" class="w-full p-3 border-2 rounded-xl bg-slate-50 focus:border-blue-500 outline-none border-transparent transition" placeholder="0.00">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recruiting (Ppl)</label>
+                            <input type="number" id="input-recruiting" class="w-full p-3 border-2 rounded-xl bg-slate-50 focus:border-blue-500 outline-none border-transparent transition" placeholder="0">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registrations (Dist.)</label>
+                            <input type="number" id="input-registrations" class="w-full p-3 border-2 rounded-xl bg-slate-50 focus:border-blue-500 outline-none border-transparent transition" placeholder="0">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">New Offices (Offer)</label>
+                            <input type="number" id="input-offices" class="w-full p-3 border-2 rounded-xl bg-slate-50 focus:border-blue-500 outline-none border-transparent transition" placeholder="0">
+                        </div>
+
+                        <div class="lg:col-span-4 space-y-4 pt-4 border-t border-slate-100">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step Ups into Status</label>
+                            <div id="stepup-inputs" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                                <!-- Status inputs injected here -->
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-4 pt-6">
+                            <button onclick="saveCurrentData()" class="w-full bg-slate-900 text-white p-4 rounded-xl font-bold hover:bg-black transition shadow-xl flex items-center justify-center gap-2">
+                                <i data-lucide="history" class="w-5 h-5"></i> SUBMIT OFFICE REPORT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Log (Office View Only) -->
+                <div id="history-container" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex items-center gap-2 font-bold text-slate-700">
+                        <i data-lucide="history" class="text-blue-500 w-5 h-5"></i> Recorded Entry Log
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    <th class="p-4">Month</th>
+                                    <th className="p-4">Earnings</th>
+                                    <th className="p-4">Recruiting</th>
+                                    <th className="p-4">Regs</th>
+                                    <th className="p-4">New Offices</th>
+                                    <th className="p-4">Total Promos</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-body" class="divide-y divide-slate-100">
+                                <!-- Records injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Global Placeholder -->
+                <div id="global-msg" class="bg-blue-600 p-8 rounded-2xl text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h3 class="text-2xl font-black mb-2">Total Delight Team Overview</h3>
+                        <p class="text-blue-100 max-w-md">Aggregate view of all offices. Select an office from the sidebar to input monthly data.</p>
+                    </div>
+                    <div class="bg-white/10 p-4 px-8 rounded-2xl backdrop-blur-md text-center">
+                        <div class="text-xs font-bold uppercase text-blue-200">Active Offices</div>
+                        <div id="global-office-count" class="text-4xl font-black">0</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Modals -->
+        <div id="modal-office" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+                <h2 class="text-2xl font-black text-slate-800 mb-6">Register New Office</h2>
+                <form onsubmit="createNewOffice(event)" class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Office Name</label>
+                        <input id="new-office-name" required class="w-full p-3 border-2 rounded-xl focus:border-blue-500 outline-none border-slate-100" placeholder="e.g. Lagos Island Branch">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Team Leader Name</label>
+                        <input id="new-office-leader" required class="w-full p-3 border-2 rounded-xl focus:border-blue-500 outline-none border-slate-100" placeholder="e.g. David Okon">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Location (City)</label>
+                        <input id="new-office-location" required class="w-full p-3 border-2 rounded-xl focus:border-blue-500 outline-none border-slate-100" placeholder="e.g. Lagos">
+                    </div>
+                    <div class="flex gap-3 pt-6">
+                        <button type="button" onclick="toggleModal(false)" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition uppercase text-xs">Cancel</button>
+                        <button type="submit" class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 uppercase text-xs tracking-wider">Create Office</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const STATUS_LEVELS = [
+            'Manager', 'Senior Manager', 'Executive Manager', 
+            'Director', 'Emerald Director', 'Sapphire Director', 'Ruby Director'
+        ];
+
+        // State
+        let state = {
+            offices: [],
+            performanceData: {},
+            selectedView: 'global',
+            currentMonth: new Date().toISOString().slice(0, 7),
+            viewType: 'monthly'
+        };
+
+        // Charts
+        let pieChart, barChart;
+
+        // Initialize
+        function init() {
+            document.getElementById('filter-month').value = state.currentMonth;
+            renderStatusInputs();
+            updateView();
+            lucide.createIcons();
+        }
+
+        // Render Status Level Inputs in the form
+        function renderStatusInputs() {
+            const container = document.getElementById('stepup-inputs');
+            container.innerHTML = STATUS_LEVELS.map(level => `
+                <div class="space-y-1 group">
+                    <div class="text-[9px] font-bold text-slate-500 group-hover:text-blue-600 truncate">${level.split(' ')[0]}</div>
+                    <input type="number" data-status="${level}" class="status-input w-full p-2 border-2 rounded-lg bg-white text-center border-slate-100 focus:border-blue-400 outline-none" value="0">
+                </div>
+            `).join('');
+        }
+
+        // View Logic
+        function switchView(viewId) {
+            state.selectedView = viewId;
+            updateView();
+        }
+
+        function switchViewType(type) {
+            state.viewType = type;
+            updateView();
+        }
+
+        function toggleModal(show) {
+            const modal = document.getElementById('modal-office');
+            modal.classList.toggle('hidden', !show);
+        }
+
+        // Data Management
+        function createNewOffice(e) {
+            e.preventDefault();
+            const id = Date.now();
+            const office = {
+                id: id,
+                name: document.getElementById('new-office-name').value,
+                leader: document.getElementById('new-office-leader').value,
+                location: document.getElementById('new-office-location').value
+            };
+            state.offices.push(office);
+            state.performanceData[id] = {};
+            toggleModal(false);
+            e.target.reset();
+            switchView(id);
+        }
+
+        function saveCurrentData() {
+            const id = state.selectedView;
+            if (id === 'global') return;
+
+            const stepUps = {};
+            document.querySelectorAll('.status-input').forEach(input => {
+                stepUps[input.dataset.status] = parseInt(input.value) || 0;
+            });
+
+            state.performanceData[id][state.currentMonth] = {
+                earnings: parseFloat(document.getElementById('input-earnings').value) || 0,
+                recruiting: parseInt(document.getElementById('input-recruiting').value) || 0,
+                registrations: parseInt(document.getElementById('input-registrations').value) || 0,
+                newOfficeProduction: parseInt(document.getElementById('input-offices').value) || 0,
+                stepUps: stepUps
+            };
+
+            updateView();
+        }
+
+        // Main Update Loop
+        function updateView() {
+            state.currentMonth = document.getElementById('filter-month').value;
+            const office = state.offices.find(o => o.id == state.selectedView);
+            
+            // Header
+            document.getElementById('header-title').innerText = office ? office.name : 'Delight Team Organization';
+            document.getElementById('header-subtitle').innerHTML = office 
+                ? `<i data-lucide="user-circle" class="w-4 h-4"></i> Team Leader: ${office.leader}` 
+                : `<i data-lucide="globe" class="w-4 h-4"></i> Centralized Performance Management`;
+
+            // Navigation Active State
+            document.getElementById('nav-global').className = `w-full text-left p-3 rounded-xl transition flex items-center gap-3 ${state.selectedView === 'global' ? 'bg-blue-600 text-white shadow-md' : 'hover:bg-slate-50 text-slate-600'}`;
+            
+            // Sidebar List
+            const list = document.getElementById('office-list');
+            if (state.offices.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-400 italic p-3">No offices added yet.</p>';
+            } else {
+                list.innerHTML = state.offices.map(o => `
+                    <button onclick="switchView(${o.id})" class="w-full text-left p-3 rounded-xl transition flex items-center justify-between mb-1 ${state.selectedView == o.id ? 'bg-blue-50 text-blue-700 border-blue-200 border' : 'hover:bg-slate-50 border border-transparent text-slate-600'}">
+                        <div class="overflow-hidden">
+                            <div class="font-medium truncate text-sm">${o.name}</div>
+                            <div class="text-[10px] opacity-70 truncate font-mono uppercase">${o.leader}</div>
+                        </div>
+                    </button>
+                `).join('');
+            }
+
+            // View Mode Buttons
+            document.getElementById('btn-monthly').className = `flex-1 py-2 text-xs font-bold rounded-lg transition ${state.viewType === 'monthly' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`;
+            document.getElementById('btn-yearly').className = `flex-1 py-2 text-xs font-bold rounded-lg transition ${state.viewType === 'yearly' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`;
+
+            // Aggregation and Stats
+            const stats = calculateStats();
+            document.getElementById('stat-earnings').innerText = `$${stats.earnings.toLocaleString()}`;
+            document.getElementById('stat-recruiting').innerText = `${stats.recruiting} Ppl`;
+            document.getElementById('stat-registrations').innerText = `${stats.registrations} Dist.`;
+            document.getElementById('stat-offices').innerText = stats.newOfficeProduction;
+
+            // Conditional Sections
+            const isGlobal = state.selectedView === 'global';
+            document.getElementById('entry-form-container').classList.toggle('hidden', isGlobal);
+            document.getElementById('history-container').classList.toggle('hidden', isGlobal);
+            document.getElementById('global-msg').classList.toggle('hidden', !isGlobal);
+            document.getElementById('global-office-count').innerText = state.offices.length;
+
+            if (!isGlobal) {
+                document.getElementById('form-month-label').innerText = state.currentMonth;
+                renderHistory();
+            }
+
+            // Charts
+            updateCharts(stats);
+            lucide.createIcons();
+        }
+
+        function calculateStats() {
+            const result = { 
+                earnings: 0, recruiting: 0, registrations: 0, newOfficeProduction: 0, 
+                stepUps: STATUS_LEVELS.reduce((a, v) => ({ ...a, [v]: 0 }), {}) 
+            };
+
+            const processOffice = (officeId) => {
+                const dataMap = state.performanceData[officeId] || {};
+                Object.keys(dataMap).forEach(date => {
+                    const isYearMatch = state.viewType === 'yearly' && date.startsWith(state.currentMonth.split('-')[0]);
+                    const isMonthMatch = state.viewType === 'monthly' && date === state.currentMonth;
+
+                    if (isYearMatch || isMonthMatch) {
+                        const d = dataMap[date];
+                        result.earnings += d.earnings;
+                        result.recruiting += d.recruiting;
+                        result.registrations += d.registrations;
+                        result.newOfficeProduction += d.newOfficeProduction;
+                        STATUS_LEVELS.forEach(lvl => { result.stepUps[lvl] += d.stepUps[lvl] || 0; });
+                    }
+                });
+            };
+
+            if (state.selectedView === 'global') {
+                state.offices.forEach(o => processOffice(o.id));
+            } else {
+                processOffice(state.selectedView);
+            }
+
+            return result;
+        }
+
+        function renderHistory() {
+            const body = document.getElementById('history-body');
+            const data = state.performanceData[state.selectedView] || {};
+            const months = Object.keys(data).sort((a, b) => b.localeCompare(a));
+
+            if (months.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400 italic text-sm">No records submitted yet.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = months.map(m => {
+                const d = data[m];
+                const totalPromos = Object.values(d.stepUps).reduce((a, b) => a + b, 0);
+                return `
+                    <tr class="hover:bg-slate-50 transition text-sm">
+                        <td class="p-4 font-bold text-blue-600">${m}</td>
+                        <td class="p-4">$${d.earnings.toLocaleString()}</td>
+                        <td class="p-4">${d.recruiting}</td>
+                        <td class="p-4">${d.registrations}</td>
+                        <td class="p-4">${d.newOfficeProduction}</td>
+                        <td class="p-4 font-medium text-orange-600">${totalPromos}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateCharts(stats) {
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            const barCtx = document.getElementById('barChart').getContext('2d');
+
+            const pieValues = [stats.recruiting, stats.registrations, stats.newOfficeProduction];
+            
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Recruiting', 'Registrations', 'New Offices'],
+                    datasets: [{
+                        data: pieValues,
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#f59e0b'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    cutout: '70%'
+                }
+            });
+
+            if (barChart) barChart.destroy();
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: STATUS_LEVELS.map(l => l.replace(' Director', '').replace(' Manager', ' Mgr')),
+                    datasets: [{
+                        label: 'Step-Ups',
+                        data: STATUS_LEVELS.map(lvl => stats.stepUps[lvl]),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function exportCSV() {
+            const headers = ["Month", "Office Name", "Team Leader", "Earnings ($)", "Recruiting", "Registrations", "New Offices", ...STATUS_LEVELS];
+            let rows = [];
+            let filename = "Delight_Team_Report.csv";
+
+            const extractRows = (oId) => {
+                const office = state.offices.find(o => o.id == oId);
+                const dataMap = state.performanceData[oId] || {};
+                Object.entries(dataMap).forEach(([month, d]) => {
+                    rows.push([
+                        month, office.name, office.leader, d.earnings, d.recruiting, d.registrations, d.newOfficeProduction,
+                        ...STATUS_LEVELS.map(lvl => d.stepUps[lvl] || 0)
+                    ]);
+                });
+            };
+
+            if (state.selectedView === 'global') {
+                state.offices.forEach(o => extractRows(o.id));
+                filename = `Delight_Team_Master_${new Date().toISOString().slice(0,10)}.csv`;
+            } else {
+                extractRows(state.selectedView);
+                const office = state.offices.find(o => o.id == state.selectedView);
+                filename = `${office.name}_Report_${new Date().toISOString().slice(0,10)}.csv`;
+            }
+
+            rows.sort((a, b) => b[0].localeCompare(a[0]));
+
+            let csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        // Run
+        window.onload = init;
+    </script>
+</body>
+</html>
